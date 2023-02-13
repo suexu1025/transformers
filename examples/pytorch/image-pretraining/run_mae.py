@@ -18,6 +18,7 @@ import os
 import sys
 from dataclasses import dataclass, field
 from typing import Optional
+import torch_xla.debug.profiler as xp
 
 import torch
 from datasets import load_dataset
@@ -224,6 +225,9 @@ def main():
     transformers.utils.logging.enable_default_handler()
     transformers.utils.logging.enable_explicit_format()
 
+    server = xp.start_server(9229)
+    logger.info('Profiling server started: {str(server)}')
+    
     # Log on each process the small summary:
     logger.warning(
         f"Process rank: {training_args.local_rank}, device: {training_args.device}, n_gpu: {training_args.n_gpu}"
