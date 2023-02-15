@@ -166,7 +166,10 @@ def main():
     # See all possible arguments in src/transformers/training_args.py
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
-
+    import os
+    import pprint
+    pprint(os.environ)
+    
     parser = HfArgumentParser((ModelArguments, DataTrainingArguments, CustomTrainingArguments))
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         # If we pass only one argument to the script and it's the path to a json file,
@@ -393,4 +396,5 @@ def _mp_fn(index):
 
 
 if __name__ == "__main__":
-    main()
+    xmp.spawn(main, args=(), nprocs=4)
+    #main()
