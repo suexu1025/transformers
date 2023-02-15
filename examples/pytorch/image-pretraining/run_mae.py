@@ -389,7 +389,7 @@ def _mp_fn(index):
     import os
     import pprint
     pprint(os.environ)
-    main()
+    #main()
 
 
 if __name__ == "__main__":
