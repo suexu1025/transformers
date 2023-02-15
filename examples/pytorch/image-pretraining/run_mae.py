@@ -386,6 +386,9 @@ def main():
 
 def _mp_fn(index):
     # For xla_spawn (TPUs)
+    import os
+    import pprint
+    pprint(os.environ)
     main()
 
 
