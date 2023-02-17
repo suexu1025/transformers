@@ -348,12 +348,12 @@ def main():
     import torch_xla.core.xla_model as xm
     if data_args.fake_data:
         train_dataset_len = 60000  # Roughly the size of Imagenet dataset.
-        train_loader = xu.SampleGenerator(
+        train_dataset = xu.SampleGenerator(
             data=(torch.zeros( training_args.train_batch_size, 3, 32, 32),
                 torch.zeros( training_args.train_batch_size , dtype=torch.int64)),
             sample_count=train_dataset_len //  training_args.train_batch_size  //
             xm.xrt_world_size())
-        test_loader = xu.SampleGenerator(
+        test_dataset = xu.SampleGenerator(
             data=(torch.zeros(training_args.train_batch_size, 3, 32, 32),
                 torch.zeros(training_args.train_batch_size, dtype=torch.int64)),
             sample_count=50000 //  training_args.train_batch_size  // xm.xrt_world_size())
