@@ -392,9 +392,7 @@ def _mp_fn(index):
     import os
     import pprint
     pprint(os.environ)
-    #main()
+    main()
 
-import torch_xla.distributed.xla_multiprocessing as xmp
 if __name__ == "__main__":
-    xmp.spawn(main, args=(), nprocs=4)
-    #main()
+    main()
