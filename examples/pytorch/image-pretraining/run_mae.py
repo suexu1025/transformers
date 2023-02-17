@@ -345,6 +345,7 @@ def main():
 
     data_args.fake_data = True
     import torch_xla.utils.utils as xu
+    import torch_xla.core.xla_model as xm
     if data_args.fake_data:
         train_dataset_len = 60000  # Roughly the size of Imagenet dataset.
         train_loader = xu.SampleGenerator(
