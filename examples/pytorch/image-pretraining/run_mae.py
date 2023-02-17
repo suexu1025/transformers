@@ -346,12 +346,25 @@ def main():
     if training_args.base_learning_rate is not None:
         training_args.learning_rate = training_args.base_learning_rate * total_train_batch_size / 256
 
+    data_args.fake_data = True
+    import torch_xla.utils.utils as xu
+    if data_args.fake_data:
+        train_dataset_len = 60000  # Roughly the size of Imagenet dataset.
+        train_loader = xu.SampleGenerator(
+            data=(torch.zeros( training_args.train_batch_size, 3, 32, 32),
+                torch.zeros( training_args.train_batch_size , dtype=torch.int64)),
+            sample_count=train_dataset_len //  training_args.train_batch_size  //
+            xm.xrt_world_size())
+        test_loader = xu.SampleGenerator(
+            data=(torch.zeros(training_args.train_batch_size, 3, 32, 32),
+                torch.zeros(training_args.train_batch_size, dtype=torch.int64)),
+            sample_count=50000 //  training_args.train_batch_size  // xm.xrt_world_size())
     # Initialize our trainer
     trainer = Trainer(
         model=model,
         args=training_args,
-        train_dataset=ds["train"] if training_args.do_train else None,
-        eval_dataset=ds["validation"] if training_args.do_eval else None,
+        train_dataset=train_loader if data_args.fake_data else (ds["train"] if training_args.do_train else None),
+        eval_dataset=test_loader if data_args.fake_data else (ds["validation"] if training_args.do_eval else None),
         tokenizer=image_processor,
         data_collator=collate_fn,
     )
