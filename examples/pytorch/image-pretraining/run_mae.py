@@ -357,6 +357,20 @@ def main():
             data=(torch.zeros(training_args.train_batch_size, 3, 32, 32),
                 torch.zeros(training_args.train_batch_size, dtype=torch.int64)),
             sample_count=50000 //  training_args.train_batch_size  // xm.xrt_world_size())
+
+        train_loader = torch.utils.data.DataLoader(
+            train_dataset,
+            batch_size=training_args.train_batch_size ,
+            sampler=None,
+            drop_last=True,
+            shuffle=False if None else True,
+            num_workers=8)
+        test_loader = torch.utils.data.DataLoader(
+            test_dataset,
+            batch_size=training_args.train_batch_size,
+            drop_last=True,
+            shuffle=False,
+            num_workers=8)
     # Initialize our trainer
     trainer = Trainer(
         model=model,
