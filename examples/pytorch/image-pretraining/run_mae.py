@@ -162,6 +162,38 @@ def collate_fn(examples):
     return {"pixel_values": pixel_values}
 
 
+class SyntheticDataset(Dataset):
+    def __init__(
+        self,
+        channels_in=1,
+        channels_out=3,
+        shape=(32, 32),
+        device="cpu",
+        layout="NCDHW",
+        scalar=False,
+    ):
+        shape = tuple(shape)
+        x_shape = (channels_in,) + shape if layout == "NCDHW" else shape + (channels_in,)
+        self.x = torch.rand(
+            (32, *x_shape), dtype=torch.float32, device=device, requires_grad=False
+        )
+        self.y = torch.randint(
+            low=0,
+            high=10,
+            size=32,
+            dtype=torch.int32,
+            device=device,
+            requires_grad=False,
+        )
+
+    def __len__(self):
+        return 32
+
+    def __getitem__(self, idx):
+        return self.x[idx % 60000], self.y[idx % 32]
+
+
+
 def main():
     # See all possible arguments in src/transformers/training_args.py
     # or by passing the --help flag to this script.
@@ -347,30 +379,10 @@ def main():
     import torch_xla.utils.utils as xu
     import torch_xla.core.xla_model as xm
     if data_args.fake_data:
-        train_dataset_len = 60000  # Roughly the size of Imagenet dataset.
-        train_dataset = xu.SampleGenerator(
-            data=(torch.zeros( training_args.train_batch_size, 3, 32, 32),
-                torch.zeros( training_args.train_batch_size , dtype=torch.int64)),
-            sample_count=train_dataset_len //  training_args.train_batch_size  //
-            xm.xrt_world_size())
-        test_dataset = xu.SampleGenerator(
-            data=(torch.zeros(training_args.train_batch_size, 3, 32, 32),
-                torch.zeros(training_args.train_batch_size, dtype=torch.int64)),
-            sample_count=50000 //  training_args.train_batch_size  // xm.xrt_world_size())
+        #train_dataset_len = 60000  # Roughly the size of Imagenet dataset.
+        train_loader = SyntheticDataset(scalar=True, shape=[32, 32])
+        val_loader = SyntheticDataset(scalar=True, shape=[32, 32])
 
-        train_loader = torch.utils.data.DataLoader(
-            train_dataset,
-            batch_size=training_args.train_batch_size ,
-            sampler=None,
-            drop_last=True,
-            shuffle=False if None else True,
-            num_workers=8)
-        test_loader = torch.utils.data.DataLoader(
-            test_dataset,
-            batch_size=training_args.train_batch_size,
-            drop_last=True,
-            shuffle=False,
-            num_workers=8)
     # Initialize our trainer
     trainer = Trainer(
         model=model,
