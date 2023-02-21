@@ -165,7 +165,7 @@ from torch.utils.data import Dataset
 class SyntheticDataset(Dataset):
     def __init__(
         self,
-        channels_in=1,
+        channels_in=3,
         channels_out=3,
         shape=(32, 32),
         device="cpu",
