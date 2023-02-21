@@ -180,7 +180,7 @@ class SyntheticDataset(Dataset):
         self.y = torch.randint(
             low=0,
             high=10,
-            size=32,
+            size=(32,),
             dtype=torch.int32,
             device=device,
             requires_grad=False,
@@ -190,7 +190,7 @@ class SyntheticDataset(Dataset):
         return 32
 
     def __getitem__(self, idx):
-        return self.x[idx % 60000], self.y[idx % 32]
+        return {"pixel_values":self.x[idx % 60000], "label": self.y[idx % 32]}
 
 
 
@@ -381,7 +381,7 @@ def main():
     if data_args.fake_data:
         #train_dataset_len = 60000  # Roughly the size of Imagenet dataset.
         train_loader = SyntheticDataset(scalar=True, shape=[32, 32])
-        val_loader = SyntheticDataset(scalar=True, shape=[32, 32])
+        test_loader = SyntheticDataset(scalar=True, shape=[32, 32])
 
     # Initialize our trainer
     trainer = Trainer(
