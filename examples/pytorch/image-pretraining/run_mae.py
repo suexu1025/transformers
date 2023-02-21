@@ -188,7 +188,7 @@ class SyntheticDataset(Dataset):
         )
 
     def __len__(self):
-        return 42500
+        return 32
 
     def __getitem__(self, idx):
         return {"pixel_values":self.x[idx % 32], "label": self.y[idx % 32]}
