@@ -169,6 +169,7 @@ class SyntheticDataset(Dataset):
         channels_in=3,
         channels_out=1,
         shape=(32, 32),
+        datasize = 7500,
         device="cpu",
         layout="NCDHW",
         scalar=False,
@@ -186,9 +187,10 @@ class SyntheticDataset(Dataset):
             device=device,
             requires_grad=False,
         )
+        self.datasize = datasize
 
     def __len__(self):
-        return 42500
+        return self.datasize
 
     def __getitem__(self, idx):
         return {"pixel_values":self.x[idx%32], "label": self.y[idx%32]}
@@ -384,8 +386,8 @@ def main():
     import torch_xla.core.xla_model as xm
     if data_args.fake_data:
         #train_dataset_len = 60000  # Roughly the size of Imagenet dataset.
-        train_loader = SyntheticDataset(scalar=True, shape=[224, 224])
-        test_loader = SyntheticDataset(scalar=True, shape=[224, 224])
+        train_loader = SyntheticDataset(scalar=True, shape=[224, 224], datasize = 42500)
+        test_loader = SyntheticDataset(scalar=True, shape=[224, 224], datasize = 7500)
 
     # Initialize our trainer
     trainer = Trainer(
