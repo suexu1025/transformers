@@ -176,12 +176,12 @@ class SyntheticDataset(Dataset):
         shape = tuple(shape)
         x_shape = (channels_in,) + shape if layout == "NCDHW" else shape + (channels_in,)
         self.x = torch.rand(
-            (42500, *x_shape), dtype=torch.float32, device=device, requires_grad=False
+            (32, *x_shape), dtype=torch.float32, device=device, requires_grad=False
         )
         self.y = torch.randint(
             low=0,
             high=10,
-            size=(42500,),
+            size=(32,),
             dtype=torch.int32,
             device=device,
             requires_grad=False,
@@ -191,7 +191,7 @@ class SyntheticDataset(Dataset):
         return 42500
 
     def __getitem__(self, idx):
-        return {"pixel_values":self.x[idx], "label": self.y[idx]}
+        return {"pixel_values":self.x[idx%32], "label": self.y[idx%32]}
 
 
 
