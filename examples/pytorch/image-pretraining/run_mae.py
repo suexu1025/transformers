@@ -355,24 +355,31 @@ def main():
 
         examples["pixel_values"] = [transforms(image) for image in examples[image_column_name]]
         return examples
+        
+    data_args.fake_data = True
+    import torch_xla.core.xla_model as xm
+    if data_args.fake_data:
+        #train_dataset_len = 60000  # Roughly the size of Imagenet dataset.
+        ds["train"] = SyntheticDataset(scalar=True, shape=[224, 224], datasize = 42500)
+        ds["validation"] = SyntheticDataset(scalar=True, shape=[224, 224], datasize = 7500)
+    else:
+        if training_args.do_train:
+            if "train" not in ds:
+                raise ValueError("--do_train requires a train dataset")
+            if data_args.max_train_samples is not None:
+                ds["train"] = ds["train"].shuffle(seed=training_args.seed).select(range(data_args.max_train_samples))
+            # Set the training transforms
+            ds["train"].set_transform(preprocess_images)
 
-    if training_args.do_train:
-        if "train" not in ds:
-            raise ValueError("--do_train requires a train dataset")
-        if data_args.max_train_samples is not None:
-            ds["train"] = ds["train"].shuffle(seed=training_args.seed).select(range(data_args.max_train_samples))
-        # Set the training transforms
-        ds["train"].set_transform(preprocess_images)
-
-    if training_args.do_eval:
-        if "validation" not in ds:
-            raise ValueError("--do_eval requires a validation dataset")
-        if data_args.max_eval_samples is not None:
-            ds["validation"] = (
-                ds["validation"].shuffle(seed=training_args.seed).select(range(data_args.max_eval_samples))
-            )
-        # Set the validation transforms
-        ds["validation"].set_transform(preprocess_images)
+        if training_args.do_eval:
+            if "validation" not in ds:
+                raise ValueError("--do_eval requires a validation dataset")
+            if data_args.max_eval_samples is not None:
+                ds["validation"] = (
+                    ds["validation"].shuffle(seed=training_args.seed).select(range(data_args.max_eval_samples))
+                )
+            # Set the validation transforms
+            ds["validation"].set_transform(preprocess_images)
 
     # Compute absolute learning rate
     total_train_batch_size = (
@@ -381,20 +388,14 @@ def main():
     if training_args.base_learning_rate is not None:
         training_args.learning_rate = training_args.base_learning_rate * total_train_batch_size / 256
 
-    data_args.fake_data = True
-    import torch_xla.utils.utils as xu
-    import torch_xla.core.xla_model as xm
-    if data_args.fake_data:
-        #train_dataset_len = 60000  # Roughly the size of Imagenet dataset.
-        train_loader = SyntheticDataset(scalar=True, shape=[224, 224], datasize = 42500)
-        test_loader = SyntheticDataset(scalar=True, shape=[224, 224], datasize = 7500)
+
 
     # Initialize our trainer
     trainer = Trainer(
         model=model,
         args=training_args,
-        train_dataset=train_loader if data_args.fake_data else (ds["train"] if training_args.do_train else None),
-        eval_dataset=test_loader if data_args.fake_data else (ds["validation"] if training_args.do_eval else None),
+        train_dataset=ds["train"] if training_args.do_train else None,
+        eval_dataset=ds["validation"] if training_args.do_eval else None,
         tokenizer=image_processor,
         data_collator=collate_fn,
     )
