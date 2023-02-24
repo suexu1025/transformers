@@ -34,7 +34,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
 from tqdm.auto import tqdm
-
+import torch_xla.debug.profiler as xp
 
 # Integrations must be imported before ML frameworks:
 # isort: off
@@ -1831,16 +1831,17 @@ class Trainer:
                 if step % args.gradient_accumulation_steps == 0:
                     self.control = self.callback_handler.on_step_begin(args, self.state, self.control)
 
-                if (
-                    ((step + 1) % args.gradient_accumulation_steps != 0)
-                    and args.local_rank != -1
-                    and args._no_sync_in_gradient_accumulation
-                ):
-                    # Avoid unnecessary DDP synchronization since there will be no backward pass on this example.
-                    with model.no_sync():
+                with xp.StepTrace('train_loop', step_num=step):
+                    if (
+                        ((step + 1) % args.gradient_accumulation_steps != 0)
+                        and args.local_rank != -1
+                        and args._no_sync_in_gradient_accumulation
+                    ):
+                        # Avoid unnecessary DDP synchronization since there will be no backward pass on this example.
+                        with model.no_sync():
+                            tr_loss_step = self.training_step(model, inputs)
+                    else:
                         tr_loss_step = self.training_step(model, inputs)
-                else:
-                    tr_loss_step = self.training_step(model, inputs)
 
                 if (
                     args.logging_nan_inf_filter
